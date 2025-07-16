@@ -1,0 +1,116 @@
+module instruction_decoder(
+input [15:0] instr,           // 16-bit instruction
+output reg [3:0] opcode,      // operation code
+output reg [3:0] rd,          // destination register
+output reg [3:0] rs1,         // source register 1
+output reg [3:0] rs2,        // source register 2
+output reg [7:0] imm,         // immediate value (for I-type)
+output reg is_immediate,      // flag to indicate immediate operation
+output reg is_jump,           // jump flag
+output reg is_load,           // load flag
+output reg is_store           // store flag
+);
+always @(*) begin
+opcode = instr[15:12];
+rd = instr[11:8];
+rs1 = instr[7:4];
+rs2 = instr[3:0];
+imm = instr[7:0];
+is_immediate = 0;   //defualt flags
+is_jump      = 0;
+is_load      = 0;
+is_store     = 0;
+// Decode flags based on opcode
+case (opcode)
+4'b0000: begin // NOP
+// no operation
+end
+4'b0001: begin // ADD
+  // rd = rs1 + rs2
+ end
+ 4'b0010: begin // SUB
+            // rd = rs1 - rs2
+  end
+ 4'b0011: begin // AND
+   end
+ 4'b0100: begin // OR
+    end
+ 4'b0101: begin // LOAD
+     is_load = 1;
+     is_immediate = 1; // LOAD rd, [imm]
+      end
+4'b0110: begin // STORE
+  is_store = 1;
+  is_immediate = 1; // STORE rs1, [imm]
+    end
+ 4'b0111: begin // JUMP
+    is_jump = 1; // JUMP to address imm
+       end
+ default: begin
+            // Unknown instruction
+end
+//////////testbench code ////////////////////////////
+module instruction_decoder_tb();
+ // Inputs
+    reg [15:0] instr;
+
+    // Outputs
+    wire [3:0] opcode;
+    wire [3:0] rd;
+    wire [3:0] rs1;
+    wire [3:0] rs2;
+    wire [7:0] imm;
+    wire is_immediate;
+    wire is_jump;
+    wire is_load;
+    wire is_store;
+
+    // Instantiate the Unit Under Test (UUT)
+    instruction_decoder uut (
+        .instr(instr),
+        .opcode(opcode),
+        .rd(rd),
+        .rs1(rs1),
+        .rs2(rs2),
+        .imm(imm),
+        .is_immediate(is_immediate),
+        .is_jump(is_jump),
+        .is_load(is_load),
+        .is_store(is_store)
+    );
+
+    // Task to display output
+   
+
+    initial begin
+        $display("Instruction Decoder Testbench");
+
+        // Test NOP (0000)
+        instr = 16'b0000_0000_0000_0000; #10; display_output;
+
+        // Test ADD (0001)
+        instr = 16'b0001_0001_0010_0011; // ADD R1 = R2 + R3
+        #10; display_output;
+
+        // Test SUB (0010)
+        instr = 16'b0010_0100_0101_0110; // SUB R4 = R5 - R6
+        #10; display_output;
+
+        // Test LOAD (0101) with imm
+        instr = 16'b0101_0010_0000_1010; // LOAD R2, [0x0A]
+        #10; display_output;
+
+        // Test STORE (0110) with imm
+        instr = 16'b0110_0000_0011_1111; // STORE R3 -> [0x3F]
+        #10; display_output;
+
+        // Test JUMP (0111)
+        instr = 16'b0111_0000_0000_1100; // JUMP to address 0x0C
+        #10; display_output;
+
+        // Unknown opcode
+        instr = 16'b1111_1111_1111_1111;
+        #10; display_output;
+
+        $stop;
+    end
