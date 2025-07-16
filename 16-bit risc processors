@@ -1,0 +1,69 @@
+module ram(
+input clk,
+input mem_read,
+input mem_write,
+input [15:0] addr,
+input [15:0] write_data,
+output reg [15:0] read_data);
+reg [15:0] mem [0:255]; // 256-word RAM
+always @(posedge clk) begin
+if (mem_write)
+mem[addr] <= write_data;
+end
+always @(*) begin
+if (mem_read)
+read_data = mem[addr];
+else
+read_data = 16'd0;
+end
+endmodule
+///////// testbench code
+module ram_tb();
+ reg clk;
+ reg mem_read;
+ reg mem_write;
+ reg [15:0] addr;
+ reg [15:0] write_data;
+wire [15:0] read_data;
+ram dut (.clk(clk),.mem_read(mem_read),.mem_write(mem_write),.addr(addr),.write_data(write_data),.read_data(read_data));
+always #5 clk = ~clk;
+initial begin
+clk = 0;
+mem_read = 0;
+mem_write = 0;
+addr = 0;
+write_data = 0;
+#10;
+addr = 16'd5;
+write_data = 16'hA5A5;
+mem_write = 1;
+#10;
+mem_write = 0;
+#10;
+addr = 16'd10;
+write_data = 16'h1234;
+mem_write = 1;
+#10;
+mem_write = 0;
+#10;
+addr = 16'd5;
+mem_read = 1;
+#10;
+$display("Read data from addr 5: %h (Expected: A5A5)", read_data);
+mem_read = 0;
+#10;
+addr = 16'd10;
+mem_read = 1;
+#10;
+$display("Read data from addr 10: %h (Expected: 1234)", read_data);
+mem_read = 0;
+#10;
+addr = 16'd20;
+mem_read = 1;
+#10;
+$display("Read data from addr 20: %h (Expected: 0000)", read_data);
+mem_read = 0;
+#10;
+$display("RAM Testbench Completed.");
+$finish;
+end
