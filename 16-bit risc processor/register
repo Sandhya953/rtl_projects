@@ -1,0 +1,96 @@
+module register_file_tb();
+// Inputs
+    reg clk;
+    reg reset;
+    reg write_enable;
+    reg [3:0] rs1_addr;
+    reg [3:0] rs2_addr;
+    reg [3:0] rd_addr;
+    reg [15:0] write_data;
+
+    // Outputs
+    wire [15:0] rs1_data;
+    wire [15:0] rs2_data;
+
+    // Instantiate the register file
+    register_file uut (
+        .clk(clk),
+        .reset(reset),
+        .write_enable(write_enable),
+        .rs1_addr(rs1_addr),
+        .rs2_addr(rs2_addr),
+        .rd_addr(rd_addr),
+        .write_data(write_data),
+        .rs1_data(rs1_data),
+        .rs2_data(rs2_data)
+    );
+
+    // Clock generation
+    always #5 clk = ~clk;
+
+    // Initial block for test sequence
+    initial begin
+        $display("Starting Register File Testbench...");
+        $monitor("Time=%0t | rs1_addr=%0d rs1_data=%h | rs2_addr=%0d rs2_data=%h", 
+                 $time, rs1_addr, rs1_data, rs2_addr, rs2_data);
+
+        // Initialize signals
+        clk = 0;
+        reset = 1;
+        write_enable = 0;
+        rs1_addr = 0;
+        rs2_addr = 0;
+        rd_addr = 0;
+        write_data = 0;
+
+        // Hold reset for a while
+        #10 reset = 0;
+
+        // Write to R1 and R2
+        #10 write_enable = 1; rd_addr = 4'd1; write_data = 16'hAAAA; // Write 0xAAAA to R1
+        #10 rd_addr = 4'd2; write_data = 16'h5555; // Write 0x5555 to R2
+        #10 write_enable = 0;
+
+        // Read from R1 and R2
+        #10 rs1_addr = 4'd1; rs2_addr = 4'd2;
+        #10;
+
+        // Write to R5
+        write_enable = 1; rd_addr = 4'd5; write_data = 16'hF00F;
+        #10 write_enable = 0;
+
+        // Read from R5 and R1
+        rs1_addr = 4'd5; rs2_addr = 4'd1;
+        #10;
+
+        // Finish simulation
+        $display("Register File Test Completed.");
+        #10 
+        $stop;
+    end
+endmodule
+///////////////////////////////Test Bench code////////////////////////
+module register_file(
+input clk,
+    input reset,
+    input write_enable,
+    input  [3:0]  rs1_addr,      // Read source register 1 address
+    input  [3:0]  rs2_addr,      // Read source register 2 address
+    input  [3:0]  rd_addr,       // Write destination register address
+    input  [15:0] write_data,    // Data to be written
+    output [15:0] rs1_data,      // Output of source register 1
+    output [15:0] rs2_data       // Output of source register 2
+    );
+    reg [15:0] regs [15:0];
+    integer i;
+assign rs1_data = regs[rs1_addr];
+assign rs2_data = regs[rs2_addr];
+always @(posedge clk or posedge reset) begin
+if (reset) begin
+for (i = 0; i < 16; i = i + 1)
+regs[i] <= 16'd0;
+end 
+else if (write_enable) begin
+ regs[rd_addr] <= write_data;
+ end
+ end
